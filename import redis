@@ -1,0 +1,22 @@
+import redis
+import json
+from datetime import timedelta
+
+class UserSession:
+    def __init__(self):
+        self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+    def is_premium_user(self, phone_number):
+        key = f"user:{phone_number}"
+        data = self.redis_client.get(key)
+        return json.loads(data).get("is_premium", False) if data else False
+
+    def activate_premium(self, phone_number):
+        key = f"user:{phone_number}"
+        user_data = {"is_premium": True}
+        self.redis_client.setex(key, timedelta(days=30), json.dumps(user_data))
+
+    def get_user_data(self, phone_number):
+        key = f"user:{phone_number}"
+        data = self.redis_client.get(key)
+        return json.loads(data) if data else {}

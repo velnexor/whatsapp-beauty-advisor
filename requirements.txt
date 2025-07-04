@@ -1,0 +1,12 @@
+flask
+twilio
+python-dotenv
+pillow
+opencv-python
+tensorflow
+googlemaps
+redis
+googletrans==4.0.0-rc1
+flask
+redis
+stripe

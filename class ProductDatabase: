@@ -1,0 +1,24 @@
+class ProductDatabase:
+    def load_products(self):
+        return {
+            "skincare": {
+                "cleansers": [
+                    {
+                        "name": "Shea Moisture African Black Soap",
+                        "price": "$8.99",
+                        "skin_type": ["acne_prone", "combination"],
+                        "link": "https://example.com/affiliate-link-1"
+                    },
+                    {
+                        "name": "Nokware Gentle Cleanser",
+                        "price": "$12.50",
+                        "skin_type": ["normal", "sensitive"],
+                        "link": "https://example.com/affiliate-link-2"
+                    }
+                ]
+            }
+        }
+
+    def get_recommendations(self, skin_condition, hair_type):
+        # Simple example: return all cleansers for now
+        return [{"product": p} for p in self.load_products()["skincare"]["cleansers"]]

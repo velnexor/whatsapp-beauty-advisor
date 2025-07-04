@@ -1,0 +1,37 @@
+class SalonBooking:
+    def load_partner_salons(self):
+        return [
+            {
+                "name": "Afro Glam Salon",
+                "address": "123 Main St, Lagos",
+                "phone": "+234-123-456-7890",
+                "services": ["braids", "locs", "natural hair"],
+                "rating": 4.8,
+                "booking_link": "https://calendly.com/afro-glam",
+                "subscription_status": "active",
+                "fee_per_booking": 1.00,
+                "is_sponsored": True
+            }
+        ]
+
+    def find_nearby_salons(self, user_location):
+        # For demo, just return all
+        return self.load_partner_salons()
+
+    def format_salon_list(self, salons):
+        response = "💅 *Nearby Salons:*\n"
+        for i, salon in enumerate(salons, 1):
+            name = salon.get('name', 'Unknown')
+            rating = salon.get('rating', 'N/A')
+            address = salon.get('address', salon.get('vicinity', salon.get('address', 'Address not available')))
+            response += f"{i}. **{name}**\n"
+            response += f"   ⭐ {rating}\n"
+            response += f"   📍 {address}\n"
+            if salon.get("is_sponsored"):
+                response += "   🌟 *Sponsored Listing*\n"
+            if 'booking_link' in salon:
+                response += f"   📅 [Book Now]({salon['booking_link']})\n"
+                if salon.get("subscription_status") != "active":
+                    response += "   💵 $1 fee applies for this booking.\n"
+            response += "\n"
+        return response

@@ -1,0 +1,76 @@
+from flask import Flask, request, jsonify
+import os
+from utils.product_database import ProductDatabase
+from utils.salon_booking import SalonBooking
+from utils.user_session import UserSession
+
+app = Flask(__name__)
+product_db = ProductDatabase()
+salon_booking = SalonBooking()
+session_manager = UserSession()
+
+# --- Stripe setup (for premium) ---
+import stripe
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    try:
+        subscription = stripe.Subscription.create(
+            customer="cus_123456789",  # Replace with actual customer ID
+            items=[{"price": "price_123456789"}],  # Replace with actual price ID
+            payment_behavior='default_incomplete',
+            expand=['latest_invoice.payment_intent']
+        )
+        return jsonify({"status": "success", "subscription_id": subscription.id})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+def handle_product_request(skin_condition, hair_type):
+    recommendations = product_db.get_recommendations(skin_condition, hair_type)
+    response = "🛍️ *Recommended Products for You:*\n"
+    for i, rec in enumerate(recommendations, 1):
+        product = rec["product"]
+        response += f"{i}. *{product['name']}*\n"
+        response += f"   💰 {product['price']}\n"
+        response += f"   🔗 [Buy Now]({product['link']})\n\n"
+    response += "💡 *Tip: Always patch test new products!*"
+    return response
+
+def handle_booking_request(user_location):
+    salons = salon_booking.find_nearby_salons(user_location)
+    return salon_booking.format_salon_list(salons)
+
+def handle_text_message(incoming_msg, sender):
+    if "help" in incoming_msg:
+        return "Send a selfie for analysis, 'products' for recommendations, or 'book' for salon booking."
+    return "Welcome to the Beauty Advisor! Type 'help' for options."
+
+@app.route('/webhook', methods=['POST'])
+def whatsapp_webhook():
+    incoming_msg = request.values.get('Body', '').strip().lower()
+    sender = request.values.get('From')
+    media_url = request.values.get('MediaUrl0')
+
+    # Premium check
+    if not session_manager.is_premium_user(sender):
+        if "premium" in incoming_msg:
+            return "💎 Unlock Premium Features for $5/month! Reply 'subscribe' to start."
+        elif "subscribe" in incoming_msg:
+            # Here you would process payment, then:
+            session_manager.activate_premium(sender)
+            return "🎉 Thank you for subscribing! Enjoy premium features."
+        return "🔒 This feature is available only for premium users. Reply 'premium' to learn more."
+
+    # Handle messages
+    if media_url:
+        # Placeholder for image analysis
+        return "Image received and analyzed! (Demo)"
+    elif "products" in incoming_msg:
+        return handle_product_request(skin_condition="acne_prone", hair_type="4c")
+    elif "book" in incoming_msg:
+        return handle_booking_request(user_location=(6.5244, 3.3792))
+    return handle_text_message(incoming_msg, sender)
+
+if __name__ == "__main__":
+    app.run(debug=True)
